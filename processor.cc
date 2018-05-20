@@ -7,17 +7,16 @@
 #include "ticked_object.hh"
 #include "util.hh"
 
-Processor::Processor(int addrSize) : addressSize(addrSize), cache(nullptr), memory(nullptr), records(nullptr),
-    blocked(false), totalRequests(0)
-{}
+Processor::Processor(int addrSize) : addressSize(addrSize), cache(nullptr), memory(nullptr), records(nullptr), blocked(false), totalRequests(0)
+{
+}
 
 Processor::~Processor()
 {
     std::cout << "Total requests: " << totalRequests << std::endl;
 }
 
-void
-Processor::scheduleForSimulation()
+void Processor::scheduleForSimulation()
 {
     createRecords();
 
@@ -27,11 +26,9 @@ Processor::scheduleForSimulation()
     schedule(r.ticksFromNow, [this, &r]{sendRequest(r);});
 }
 
-void
-Processor::sendRequest(Record &r)
+void Processor::sendRequest(Record &r)
 {
-    DPRINT("Sending request 0x" << std::hex << r.address
-            << std::dec << ":" << r.size << " (" << r.requestId << ")");
+    DPRINT("Sending request 0x" << std::hex << r.address << std::dec << ":" << r.size << " (" << r.requestId << ")");
     outstanding[r.requestId] = &r;
     if (cache->receiveRequest(r.address, r.size, r.write ? r.dataVec.data() : nullptr, r.requestId)) {
         totalRequests++;
@@ -42,7 +39,8 @@ Processor::sendRequest(Record &r)
         // Queue the next request.
         Record &next = *trace.front();
         schedule(r.ticksFromNow, [this, &next]{sendRequest(next);});
-    } else {
+    } 
+	else {
         DPRINT("Cache is blocked. Wait for later.");
         // Cache is blocked wait for later.
         blocked = true;
@@ -52,8 +50,7 @@ Processor::sendRequest(Record &r)
     }
 }
 
-void
-Processor::receiveResponse(int request_id, const uint8_t* data)
+void Processor::receiveResponse(int request_id, const uint8_t* data)
 {
     // Check to make sure the data is correct!
     DPRINT("Got response for id " << request_id);
@@ -72,25 +69,23 @@ Processor::receiveResponse(int request_id, const uint8_t* data)
     }
 }
 
-int
-Processor::getAddrSize()
+int Processor::getAddrSize()
 {
     return addressSize;
 }
 
-void
-Processor::checkData(Record &record, const uint8_t* cache_data)
+void Processor::checkData(Record &record, const uint8_t* cache_data)
 {
     assert(memory);
     if (record.write) {
         memory->processorWrite(record.address, record.size, record.dataVec.data());
-    } else {
+    } 
+	else {
         memory->checkRead(record.address, record.size, cache_data);
     }
 }
 
-void
-Processor::createRecords()
+void Processor::createRecords()
 {
     while (!trace.empty()) trace.pop(); // clear any previous queued requests.
     if (records) {
@@ -98,7 +93,8 @@ Processor::createRecords()
         for (auto& record : recVec) {
             trace.push(&record);
         }
-    } else {
+    } 
+	else {
         // Commented out because the queue of pointers needs a backing
         // array of memory to work correctly.
         /*//               Ticks   Write  Address   ID#   size   data

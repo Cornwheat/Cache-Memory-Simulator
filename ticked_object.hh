@@ -16,7 +16,8 @@ struct Event
         tick(tick), function(function) { }
 };
 
-struct Comp {
+struct Comp 
+{
     bool operator()(Event *e1, Event *e2) const {
         return e1->tick > e2->tick;
     }

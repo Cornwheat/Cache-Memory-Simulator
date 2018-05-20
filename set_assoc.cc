@@ -9,8 +9,8 @@
 int numberOfWays;
 
 // CACHE SETUP
-SetAssociativeCache::SetAssociativeCache(int64_t size, Memory& memory, Processor& processor, int ways)
-	: Cache(size, memory, processor),
+SetAssociativeCache::SetAssociativeCache(int64_t size, Memory& memory, Processor& processor, int ways) : 
+	Cache(size, memory, processor),
 	tagBits(processor.getAddrSize() - log2int((size / memory.getLineSize())/ways) - memory.getLineBits()), // Tag bits = Processor Size - # of Sets - Offset
 	// # of Sets = # of Lines / ways
 	// # of Lines = Cache Size / Line Size
@@ -56,38 +56,32 @@ bool SetAssociativeCache::receiveRequest(uint64_t address, int size, const uint8
 	assert(address < ((uint64_t)1 << processor.getAddrSize())); // within address range
 	assert((address &  (size - 1)) == 0); // naturally aligned
 
-	if (blocked) 
-	{
+	if (blocked) {
 		DPRINT("Cache is blocked!"); // Cache is currently blocked, so it cannot receive a new request
 		return false;
 	}
 
 	int setLine = hit(address); // Check if Hit;  SetLine = line in Set if hit OR -1 if miss
 
-	if (setLine >= 0) // HIT
-	{
+	if (setLine >= 0) { // HIT
 		DPRINT("Hit in cache");
 		uint8_t* line = dataArray.getLine(setLine); // line is the Address of the data of Set Line
 
 		int block_offset = getBlockOffset(address); // Offset
 
-		if (data) // WRITE
-		{
+		if (data) {  // WRITE
 			memcpy(&line[block_offset], data, size); // Write data into the address of the line
 			sendResponse(request_id, nullptr); 
 			tagArray.setState(setLine, Dirty); // Set Set line to dirty
 		}
-		else // READ
-		{
+		else { // READ
 			sendResponse(request_id, &line[block_offset]);
 		}
 	}
-	else // MISS
-	{
+	else { // MISS
 		DPRINT("Miss in cache");
 		setLine = dirty(address); // -1 if all lines of Set Dirty, index of Clean Line otherwise
-		if (setLine < 0) // Every line in Set is Dirty
-		{
+		if (setLine < 0) {  // Every line in Set is Dirty
 			DPRINT("Dirty, writing back");
 			// EVICTION
 			setLine = (getIndex(address) * numberOfWays) + evictedLineIndex(); // SetLine is set to the evicted line
@@ -139,16 +133,14 @@ void SetAssociativeCache::receiveMemResponse(int request_id, const uint8_t* data
 	// Treat as a hit
 	int block_offset = getBlockOffset(mshr.savedAddr);
 
-	if (mshr.savedData) 
-	{
+	if (mshr.savedData) {
 		// if this is a write, copy the data into the cache.
 		memcpy(&line[block_offset], mshr.savedData, mshr.savedSize);
 		sendResponse(mshr.savedId, nullptr);
 		// Mark dirty
 		tagArray.setState(index, Dirty);
 	}
-	else 
-	{
+	else {
 		// This is a read so we need to return data
 		sendResponse(mshr.savedId, &line[block_offset]);
 	}
@@ -169,12 +161,10 @@ int SetAssociativeCache::hit(uint64_t address)
 	int index = getIndex(address); // Grab set # from address
 	int LineIndex = (index * numberOfWays); // Find line index for Tag Array
 	
-	for (int SetIndex = 0; SetIndex < numberOfWays; SetIndex++) // For every line in the Set
-	{
+	for (int SetIndex = 0; SetIndex < numberOfWays; SetIndex++) { // For every line in the Set
 		State state = (State)tagArray.getState(LineIndex + SetIndex); // Grab state of line in Set
 		uint64_t line_tag = tagArray.getTag(LineIndex + SetIndex); // Grab Tag of line in Set
-		if (((state == Valid) || (state == Dirty)) && (line_tag == incomingTag)) // If state is Valid and Tags match, it's a hit
-		{
+		if (((state == Valid) || (state == Dirty)) && (line_tag == incomingTag)) { // If state is Valid and Tags match, it's a hit
 			return (LineIndex + SetIndex); // The incoming address has the same tag as a line in the set then it's a hit; return the line in Set
 		}
 	}
@@ -187,11 +177,9 @@ int SetAssociativeCache::dirty(uint64_t address)
 	int index = getIndex(address);
 	int LineIndex = (index * numberOfWays); // Find index of set in Tag Array
 
-	for (int SetIndex = 0; SetIndex < numberOfWays; SetIndex++) // For every line in the Set
-	{
+	for (int SetIndex = 0; SetIndex < numberOfWays; SetIndex++) { // For every line in the Set
 		State state = (State)tagArray.getState(LineIndex + SetIndex); // Grab state of line in Set
-		if (state != Dirty) // If the line is not dirty
-		{
+		if (state != Dirty) {  // If the line is not dirty
 			return (LineIndex + SetIndex); // Return the clean Line
 		}
 	}

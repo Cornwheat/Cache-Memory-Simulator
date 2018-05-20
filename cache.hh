@@ -37,8 +37,7 @@ class Cache
      * @return true if the request can be received, false if the cache is
      *         blocked and the request must be retried later.
      */
-    virtual bool receiveRequest(uint64_t address, int size, const uint8_t* data,
-                                int request_id) = 0;
+    virtual bool receiveRequest(uint64_t address, int size, const uint8_t* data, int request_id) = 0;
 
     /**
      * Called when memory id finished processing a request.
@@ -72,8 +71,7 @@ class Cache
      *        NOTE: You may choose any request id you want and the memory will
      *        use that id when it replies.
      */
-    void sendMemRequest(uint64_t address, int size, const uint8_t* data,
-                        int request_id);
+    void sendMemRequest(uint64_t address, int size, const uint8_t* data, int request_id);
 
     /// Size of cache in bytes
     int64_t size;

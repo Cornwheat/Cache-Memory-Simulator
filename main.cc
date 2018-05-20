@@ -19,7 +19,8 @@ int main(int argc, char *argv[])
     // const char* recordFile = "./tests/randomStagger1000000.txt";
     if (argc == 2) {
         recordFile = argv[1];
-    } else if (argc > 2) {
+    } 
+	else if (argc > 2) {
         std::cout << "Usage: cache_simulator [records file]" << std::endl;
     }
 

@@ -84,7 +84,8 @@ static void generateRandomWriteFollowedByReadTest(string filename, size_t cluste
     store.writeRecords();
 }
 
-int main() {
+int main() 
+{
     generateRandomWriteFollowedByReadTest("randomSimple.txt", 2, 17, 4, 4, 5, 5, 32, 8);
     generateRandomWriteFollowedByReadTest("randomSimple10000.txt", 500, 20, 16, 256, 5, 5, 32, 8);
     generateRandomWriteFollowedByReadTest("randomStagger10000.txt", 500, 20, 16, 256, 1, 5, 32, 8);

@@ -10,8 +10,8 @@
 // int numberOfWays;
 // int numberOfMSHR;
 
-NonBlockingCache::NonBlockingCache(int64_t size, Memory& memory, Processor& processor, int ways, int mshrs)
-    : SetAssociativeCache(size, memory, processor, ways),
+NonBlockingCache::NonBlockingCache(int64_t size, Memory& memory, Processor& processor, int ways, int mshrs): 
+	SetAssociativeCache(size, memory, processor, ways),
     tagBits(processor.getAddrSize() - log2int((size / memory.getLineSize())/ways) - memory.getLineBits()), // Tag bits = Processor Size - # of Sets - Offset
     // # of Sets = # of Lines / ways
     // # of Lines = Cache Size / Line Size
@@ -33,8 +33,7 @@ NonBlockingCache::NonBlockingCache(int64_t size, Memory& memory, Processor& proc
 	mshrTable.savedSetLineIndex = (int *) malloc(sizeof(int) * mshrs);
 
 	// initialize MHRS array values to defaults
-	for (int i = 0; i < mshrs; i++)
-	{
+	for (int i = 0; i < mshrs; i++){
 		mshrTable.savedId[i] = -1;
 		mshrTable.savedAddr[i] = 0;
 		mshrTable.savedSize[i] = 0;
@@ -71,6 +70,7 @@ NonBlockingCache::~NonBlockingCache()
 
 int NonBlockingCache::evictedLineIndex()
 {
+	// Can implement cache eviction strategy here:
 	return (int) rand() % numberOfWays;
 }
 
@@ -80,38 +80,32 @@ bool NonBlockingCache::receiveRequest(uint64_t address, int size, const uint8_t*
 	assert(address < ((uint64_t)1 << processor.getAddrSize())); // within address range
 	assert((address &  (size - 1)) == 0); // naturally aligned
 
-	if (blocked) 
-	{
+	if (blocked) {
 		DPRINT("Cache is blocked!"); // Cache is currently blocked, so it cannot receive a new request
 		return false;
 	}
 
 	int setLine = hit(address); // Check if Hit;  SetLine = line in Set if hit OR -1 if miss
 
-	if (setLine >= 0) // HIT
-	{
+	if (setLine >= 0) { // HIT
 		DPRINT("Hit in cache");
 		uint8_t* line = dataArray.getLine(setLine); // line is the Address of the data of Set Line
 
 		int block_offset = getBlockOffset(address); // Offset
 
-		if (data) // WRITE
-		{
+		if (data) { // WRITE
 			memcpy(&line[block_offset], data, size); // Write data into the address of the line
 			sendResponse(request_id, nullptr); 
 			tagArray.setState(setLine, Dirty); // Set Set line to dirty
 		}
-		else // READ
-		{
+		else { // READ
 			sendResponse(request_id, &line[block_offset]);
 		}
 	}
-	else // MISS
-	{
+	else { // MISS
 		DPRINT("Miss in cache");
 		setLine = dirty(address); // -1 if all lines of Set Dirty, index of Clean Line otherwise
-		if (setLine < 0) // Every line in Set is Dirty
-		{
+		if (setLine < 0) { // Every line in Set is Dirty
 			DPRINT("Dirty, writing back");
 			// EVICTION
 			setLine = (getIndex(address) * numberOfWays) + evictedLineIndex(); // SetLine is set to the evicted line
@@ -136,8 +130,7 @@ bool NonBlockingCache::receiveRequest(uint64_t address, int size, const uint8_t*
 		//mshrTable.savedData[availableMSHR] = (uint8_t*) &data;
 		mshrTable.savedData[availableMSHR] = (uint8_t*) data;
 		mshrTable.savedSetLineIndex[availableMSHR] = setLine;
-		if (availableMSHR == numberOfMSHR - 1) // If the MSHR used was the last available MSHR on the table block the cache.
-		{
+		if (availableMSHR == numberOfMSHR - 1) { // If the MSHR used was the last available MSHR on the table block the cache.
 			// Mark the cache as blocked
 			blocked = true; // The Cache is blocked while it is waiting for data from Memory
 		}
@@ -151,10 +144,8 @@ void NonBlockingCache::receiveMemResponse(int request_id, const uint8_t* data)
 	assert(data);
 
 	int MSHRTableIndex = 0;
-	for (int MSHRIndex = 0; MSHRIndex < numberOfMSHR; MSHRIndex++) // For every MSHR in the MSHR Table
-	{
-		if (request_id == mshrTable.savedId[MSHRIndex]) // If the requested ID is the same as the ID saved in the MSHR Index
-		{
+	for (int MSHRIndex = 0; MSHRIndex < numberOfMSHR; MSHRIndex++) { // For every MSHR in the MSHR Table
+		if (request_id == mshrTable.savedId[MSHRIndex]) { // If the requested ID is the same as the ID saved in the MSHR Index
 			MSHRTableIndex = MSHRIndex; // Set the examined index to the one that matches ID
 		}
 	}
@@ -176,16 +167,14 @@ void NonBlockingCache::receiveMemResponse(int request_id, const uint8_t* data)
 	// Treat as a hit
 	int block_offset = getBlockOffset(mshrTable.savedAddr[MSHRTableIndex]);
 
-	if (mshrTable.savedData[MSHRTableIndex]) 
-	{
+	if (mshrTable.savedData[MSHRTableIndex]) {
 		// if this is a write, copy the data into the cache.
 		memcpy(&line[block_offset], (void**)mshrTable.savedData[MSHRTableIndex], mshrTable.savedSize[MSHRTableIndex]);
 		sendResponse(mshrTable.savedId[MSHRTableIndex], nullptr);
 		// Mark dirty
 		tagArray.setState(index, Dirty);
 	}
-	else 
-	{
+	else {
 		// This is a read so we need to return data
 		sendResponse(mshrTable.savedId[MSHRTableIndex], &line[block_offset]);
 	}
@@ -200,7 +189,6 @@ void NonBlockingCache::receiveMemResponse(int request_id, const uint8_t* data)
 
 }
 
-
 // HIT
 int NonBlockingCache::hit(uint64_t address)
 {
@@ -208,12 +196,10 @@ int NonBlockingCache::hit(uint64_t address)
 	int index = getIndex(address); // Grab set # from address
 	int LineIndex = (index * numberOfWays); // Find line index for Tag Array
 	
-	for (int SetIndex = 0; SetIndex < numberOfWays; SetIndex++) // For every line in the Set
-	{
+	for (int SetIndex = 0; SetIndex < numberOfWays; SetIndex++) { // For every line in the Set
 		State state = (State)tagArray.getState(LineIndex + SetIndex); // Grab state of line in Set
 		uint64_t line_tag = tagArray.getTag(LineIndex + SetIndex); // Grab Tag of line in Set
-		if (((state == Valid) || (state == Dirty)) && (line_tag == incomingTag)) // If state is Valid and Tags match, it's a hit
-		{
+		if (((state == Valid) || (state == Dirty)) && (line_tag == incomingTag)) {  // If state is Valid and Tags match, it's a hit
 			return (LineIndex + SetIndex); // The incoming address has the same tag as a line in the set then it's a hit; return the line in Set
 		}
 	}
@@ -226,11 +212,9 @@ int NonBlockingCache::dirty(uint64_t address)
 	int index = getIndex(address);
 	int LineIndex = (index * numberOfWays); // Find index of set in Tag Array
 
-	for (int SetIndex = 0; SetIndex < numberOfWays; SetIndex++) // For every line in the Set
-	{
+	for (int SetIndex = 0; SetIndex < numberOfWays; SetIndex++) {  // For every line in the Set
 		State state = (State)tagArray.getState(LineIndex + SetIndex); // Grab state of line in Set
-		if (state != Dirty) // If the line is not dirty
-		{
+		if (state != Dirty) { // If the line is not dirty
 			return (LineIndex + SetIndex); // Return the clean Line
 		}
 	}
@@ -239,8 +223,7 @@ int NonBlockingCache::dirty(uint64_t address)
 
 int NonBlockingCache::findEmptyMSHR()
 {
-	for (int MSHRSlot = 0; MSHRSlot < numberOfMSHR - 1; MSHRSlot++) // Check every slot of MSHR Table
-	{
+	for (int MSHRSlot = 0; MSHRSlot < numberOfMSHR - 1; MSHRSlot++) { // Check every slot of MSHR Table
 		if ((mshrTable.savedId[MSHRSlot] == -1) // If Slot in MSHR Table is set at default conditions (aka empty)
 			&& (mshrTable.savedAddr[MSHRSlot] == 0)
 			&& (mshrTable.savedSize[MSHRSlot] == 0)

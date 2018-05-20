@@ -23,14 +23,13 @@ Memory::~Memory()
     }
 }
 
-void
-Memory::receiveRequest(uint64_t address, int size, const uint8_t* data,
-                       int request_id)
+void Memory::receiveRequest(uint64_t address, int size, const uint8_t* data, int request_id)
 {
     if (data) {
         // writing back data, so this is a writeback.
         cacheWritebacks++;
-    } else {
+    } 
+	else {
         // Reading data, must be a cache miss.
         cacheMisses++;
     }
@@ -60,7 +59,8 @@ Memory::receiveRequest(uint64_t address, int size, const uint8_t* data,
         }
         // Now that it's written back, it's no longer dirty in the cache
         dataStorage[address].dirty = false;
-    } else {
+    } 
+	else {
         // If reading schedule a request for later.
         // Wait for a "random" amount of time to reply
         schedule(10+curTick() % 10,
@@ -70,20 +70,17 @@ Memory::receiveRequest(uint64_t address, int size, const uint8_t* data,
     }
 }
 
-int
-Memory::getLineSize()
+int Memory::getLineSize()
 {
     return lineSize;
 }
 
-int
-Memory::getLineBits()
+int Memory::getLineBits()
 {
     return log2int(lineSize);
 }
 
-void
-Memory::processorWrite(uint64_t address, int size, const uint8_t* data)
+void Memory::processorWrite(uint64_t address, int size, const uint8_t* data)
 {
     uint64_t line_address = address & ~(lineSize - 1);
     auto it = dataStorage.find(line_address);
@@ -101,8 +98,7 @@ Memory::processorWrite(uint64_t address, int size, const uint8_t* data)
     it->second.dirty = true;
 }
 
-void
-Memory::checkRead(uint64_t address, int size, const uint8_t* data)
+void Memory::checkRead(uint64_t address, int size, const uint8_t* data)
 {
     uint64_t line_address = address & ~(lineSize - 1);
     auto it = dataStorage.find(line_address);
@@ -121,8 +117,7 @@ Memory::checkRead(uint64_t address, int size, const uint8_t* data)
     }
 }
 
-bool
-Memory::compareData(const uint8_t *correct, const uint8_t *compare, int num)
+bool Memory::compareData(const uint8_t *correct, const uint8_t *compare, int num)
 {
     bool match = true;
     for (int i = 0; i < num; i++) {

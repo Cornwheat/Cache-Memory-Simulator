@@ -18,47 +18,41 @@ TagArray::TagArray(int lines, int state_bits, int tag_bits) :
     totalSize += getSize();
 }
 
-uint64_t
-TagArray::getTag(int line)
+uint64_t TagArray::getTag(int line)
 {
     assert(line >= 0);
     assert(line < lines);
     return tags[line];
 }
 
-uint32_t
-TagArray::getState(int line)
+uint32_t TagArray::getState(int line)
 {
     assert(line >= 0);
     assert(line < lines);
     return states[line];
 }
 
-void
-TagArray::setTag(int line, uint64_t tag)
+void TagArray::setTag(int line, uint64_t tag)
 {
     uint64_t tag_mask = ((uint64_t)-1) >> (64 - tagBits);
     assert((tag & tag_mask) == tag);
     tags[line] = tag;
 }
 
-void
-TagArray::setState(int line, uint32_t state)
+void TagArray::setState(int line, uint32_t state)
 {
     uint64_t state_mask = ((uint64_t)-1) >> (64 - stateBits);
     assert((state & state_mask) == state);
     states[line] = state;
 }
 
-int64_t
-TagArray::getSize()
+int64_t TagArray::getSize()
 {
     int64_t bits = (stateBits + tagBits) * tags.size();
     return bits/8;
 }
 
-int64_t
-TagArray::getTotalSize()
+int64_t TagArray::getTotalSize()
 {
     return totalSize;
 }

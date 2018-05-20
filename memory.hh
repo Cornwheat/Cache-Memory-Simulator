@@ -24,8 +24,7 @@ class Memory : public TickedObject
      * @param data is non-null, then this is a store request.
      * @param request_id the id that must be used when replying to this request
      */
-    void receiveRequest(uint64_t address, int size, const uint8_t* data,
-                        int request_id);
+    void receiveRequest(uint64_t address, int size, const uint8_t* data, int request_id);
 
     /**
      * @return the line size in bytes
@@ -55,7 +54,8 @@ class Memory : public TickedObject
     int64_t memorySize;
     int lineSize;
 
-    struct Block {
+    struct Block 
+	{
         uint8_t *data;
         bool dirty; // True if this data is dirty in the cache.
     };

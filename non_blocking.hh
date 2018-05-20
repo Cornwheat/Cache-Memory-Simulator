@@ -15,8 +15,7 @@ class NonBlockingCache: public SetAssociativeCache
     *        of ways cannot be realized, this will cause an error
     * @param number of MSHRs (or max number of concurrent outstanding requests)
     */
-    NonBlockingCache(int64_t size, Memory& memory, Processor& processor,
-                        int ways, int mshrs);
+    NonBlockingCache(int64_t size, Memory& memory, Processor& processor, int ways, int mshrs);
 
     /**
      * Destructor
@@ -36,8 +35,7 @@ class NonBlockingCache: public SetAssociativeCache
      * @return true if the request can be received, false if the cache is
      *         blocked and the request must be retried later.
      */
-    bool receiveRequest(uint64_t address, int size, const uint8_t* data,
-                        int request_id) override;
+    bool receiveRequest(uint64_t address, int size, const uint8_t* data, int request_id) override;
 
     /**
      * Called when memory id finished processing a request.

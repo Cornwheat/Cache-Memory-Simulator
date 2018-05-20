@@ -6,42 +6,33 @@
 #include "processor.hh"
 #include "util.hh"
 
-DirectMappedCache::DirectMappedCache(int64_t size, Memory& memory,
-                                     Processor& processor) :
+DirectMappedCache::DirectMappedCache(int64_t size, Memory& memory, Processor& processor) :
     Cache(size, memory, processor),
-    tagBits(processor.getAddrSize() - log2int(size / memory.getLineSize()) -
-            memory.getLineBits()),
+    tagBits(processor.getAddrSize() - log2int(size / memory.getLineSize()) - memory.getLineBits()),
     indexMask(size / memory.getLineSize() - 1),
-    tagArray(size / memory.getLineSize(), // Lines
-         2, // 1 bit for valid, 1 bit for dirty.
-         tagBits), // Bits for the tag
+    tagArray(size / memory.getLineSize(), 2, tagBits),								 
     dataArray(size / memory.getLineSize(), memory.getLineSize()),
     blocked(false), mshr({-1,0,0,nullptr})
 {
 
 }
 
-int64_t
-DirectMappedCache::getIndex(uint64_t address)
+int64_t DirectMappedCache::getIndex(uint64_t address)
 {
     return (address >> memory.getLineBits()) & indexMask;
 }
 
-int
-DirectMappedCache::getBlockOffset(uint64_t address)
+int DirectMappedCache::getBlockOffset(uint64_t address)
 {
     return address & (memory.getLineSize() - 1);
 }
 
-uint64_t
-DirectMappedCache::getTag(uint64_t address)
+uint64_t DirectMappedCache::getTag(uint64_t address)
 {
     return address >> (processor.getAddrSize() - tagBits);
 }
 
-bool
-DirectMappedCache::receiveRequest(uint64_t address, int size,
-                                  const uint8_t* data, int request_id)
+bool DirectMappedCache::receiveRequest(uint64_t address, int size, const uint8_t* data, int request_id)
 {
     assert(size <= memory.getLineSize()); // within line size
     // within address range
@@ -69,11 +60,13 @@ DirectMappedCache::receiveRequest(uint64_t address, int size,
             sendResponse(request_id, nullptr);
             // Mark dirty
             tagArray.setState(index, Dirty);
-        } else {
+        } 
+		else {
             // This is a read so we need to return data
             sendResponse(request_id, &line[block_offset]);
         }
-    } else {
+    } 
+	else {
         DPRINT("Miss in cache " << tagArray.getState(index));
         if (dirty(address)) {
             DPRINT("Dirty, writing back");
@@ -109,8 +102,7 @@ DirectMappedCache::receiveRequest(uint64_t address, int size,
     return true;
 }
 
-void
-DirectMappedCache::receiveMemResponse(int request_id, const uint8_t* data)
+void DirectMappedCache::receiveMemResponse(int request_id, const uint8_t* data)
 {
     assert(request_id == 0);
     assert(data);
@@ -150,8 +142,7 @@ DirectMappedCache::receiveMemResponse(int request_id, const uint8_t* data)
     mshr.savedData = nullptr;
 }
 
-bool
-DirectMappedCache::hit(uint64_t address)
+bool DirectMappedCache::hit(uint64_t address)
 {
     int index = getIndex(address);
     State state = (State)tagArray.getState(index);
@@ -160,8 +151,7 @@ DirectMappedCache::hit(uint64_t address)
     return (state == Valid || state == Dirty) && line_tag == getTag(address);
 }
 
-bool
-DirectMappedCache::dirty(uint64_t address)
+bool DirectMappedCache::dirty(uint64_t address)
 {
     int index = getIndex(address);
     State state = (State)tagArray.getState(index);

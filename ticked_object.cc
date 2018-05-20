@@ -10,16 +10,13 @@ TickedObject::TickedObject()
 
 }
 
-void
-TickedObject::schedule(int64_t ticks_from_now,
-                       const std::function<void(void)>& function)
+void TickedObject::schedule(int64_t ticks_from_now, const std::function<void(void)>& function)
 {
     // NOTE: Not using a *new* event here causes all sorts of issues...
     queue.push(new Event(currentTick+ticks_from_now, function));
 }
 
-void
-TickedObject::runSimulation(int64_t ticks)
+void TickedObject::runSimulation(int64_t ticks)
 {
     while(currentTick < ticks && !queue.empty()) {
         assert(currentTick >= 0);
@@ -33,8 +30,7 @@ TickedObject::runSimulation(int64_t ticks)
     std::cout << "Execution took " << currentTick << " ticks." << std::endl;
 }
 
-int64_t
-TickedObject::curTick()
+int64_t TickedObject::curTick()
 {
     return currentTick;
 }

@@ -31,8 +31,7 @@ class DirectMappedCache: public Cache
      * @return true if the request can be received, false if the cache is
      *         blocked and the request must be retried later.
      */
-    bool receiveRequest(uint64_t address, int size, const uint8_t* data,
-                        int request_id) override;
+    bool receiveRequest(uint64_t address, int size, const uint8_t* data, int request_id) override;
 
     /**
      * Called when memory id finished processing a request.
@@ -93,7 +92,8 @@ class DirectMappedCache: public Cache
     /// If true, the cache is currently blocked
     bool blocked;
 
-    struct MSHR {
+    struct MSHR 
+	{
         /// This is the current request_id that is blocking the cache.
         int savedId;
 
